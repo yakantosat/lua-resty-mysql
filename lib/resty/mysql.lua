@@ -1,21 +1,25 @@
 -- Copyright (C) 2012 Yichun Zhang (agentzh)
+-- lua5.3
 
 
-local bit = require "bit"
+--local bit = require "bit"
 local sub = string.sub
+local gsub = string.gsub
 local tcp = ngx.socket.tcp
 local strbyte = string.byte
 local strchar = string.char
 local strfind = string.find
 local format = string.format
 local strrep = string.rep
+local strunpack = string.unpack
+local strpack = string.pack
 local null = ngx.null
-local band = bit.band
-local bxor = bit.bxor
-local bor = bit.bor
-local lshift = bit.lshift
-local rshift = bit.rshift
-local tohex = bit.tohex
+--local band = bit.band
+--local bxor = bit.bxor
+--local bor = bit.bor
+--local lshift = bit.lshift
+--local rshift = bit.rshift
+--local tohex = bit.tohex
 local sha1 = ngx.sha1_bin
 local concat = table.concat
 local unpack = unpack
@@ -89,16 +93,21 @@ local function _get_byte4(data, i)
 end
 
 
-local function _get_byte8(data, i)
-    local a, b, c, d, e, f, g, h = strbyte(data, i, i + 7)
+--local function _get_byte8(data, i)
+--    local a, b, c, d, e, f, g, h = strbyte(data, i, i + 7)
 
     -- XXX workaround for the lack of 64-bit support in bitop:
-    local lo = bor(a, lshift(b, 8), lshift(c, 16), lshift(d, 24))
-    local hi = bor(e, lshift(f, 8), lshift(g, 16), lshift(h, 24))
-    return lo + hi * 4294967296, i + 8
+--    local lo = bor(a, lshift(b, 8), lshift(c, 16), lshift(d, 24))
+--    local hi = bor(e, lshift(f, 8), lshift(g, 16), lshift(h, 24))
+--    return lo + hi * 4294967296, i + 8
 
     -- return bor(a, lshift(b, 8), lshift(c, 16), lshift(d, 24), lshift(e, 32),
                -- lshift(f, 40), lshift(g, 48), lshift(h, 56)), i + 8
+--end
+
+-- use lua 5.3 new feature
+local function _get_byte8(data, i)
+   return strunpack("<I8", data, i)
 end
 
 
@@ -149,6 +158,12 @@ local function _dump(data)
         bytes[i] = format("%x", strbyte(data, i))
     end
     return concat(bytes, " ")
+end
+
+-- use lua 5.3 new feature
+local function _dump(data)
+   return gsub(data, ".",
+      function (x) return format("%02x", strbyte(x)) end)
 end
 
 
